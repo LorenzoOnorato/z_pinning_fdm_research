@@ -1,5 +1,6 @@
 import math
 import matplotlib.pyplot as plt
+from numpy import pi as pi
 
 class PinDefinition:
     def __init__(self, largest_side, smallest_side, pin_dimension, pin_shape, num_pins_largest_side,
@@ -37,7 +38,7 @@ class PinDefinition:
 
     def fit_in_cross_section(self):
         """Check if the pins fit within the cross-section based on layout and infill percentage."""
-        total_pin_area = (self.num_pins_largest_side * self.num_pins_smallest_side) * (self.pin_dimension ** 2)
+        total_pin_area = ((self.num_pins_largest_side * self.num_pins_smallest_side) * pi * (self.pin_dimension ** 2) / 4)
         total_area = self.largest_side * self.smallest_side
 
         real_infill = total_pin_area / total_area
@@ -50,15 +51,15 @@ class PinDefinition:
         actual_edge_margin_smallest = (self.smallest_side - total_pin_length_smallest_side) / 2
 
         # Allow a 10% range for the infill percentage
-        if abs(real_infill - self.infill_percentage) <= 1:
+        if abs(real_infill * 100 - self.infill_percentage) <= 1:
             if actual_edge_margin_largest >= self.least_edge_margin and actual_edge_margin_smallest >= self.least_edge_margin:
                 return True
             else:
                 print(f"Problem: pins do not fit within the cross-section.")
                 return False
         else:
-            print(f"Problem: the number of pins is does not provide appropriate infill"
-            f" (effective infill :{total_pin_area/total_area * 100} %).")
+            print(f"Problem: the number of pins is does not provide appropriate infill \n"
+            f" (effective infill :{total_pin_area/total_area * 100} % -  layer protrusion is not taken into account) .")
             return False
 
     def calculate_pin_positions(self):
@@ -84,25 +85,30 @@ class PinDefinition:
             for j in range(self.num_pins_smallest_side):
                 x_position = spacing_x + i * (self.pin_dimension + spacing_x) + self.pin_dimension / 2
                 y_position = spacing_y + j * (self.pin_dimension + spacing_y) + self.pin_dimension / 2
-                pin_positions.append((x_position, y_position))
+                pin_positions.append((round(x_position, 4), (round(y_position, 4))))
 
         return pin_positions
 
     def visualize_pin_layout(self):
         """Visualize the layout of the pins in the cross-section."""
         fig, ax = plt.subplots()
-        ax.add_patch(plt.Rectangle((0, 0), self.largest_side, self.smallest_side, edgecolor='black', facecolor='none', lw=2))
+        ax.add_patch(
+            plt.Rectangle((0, 0), self.largest_side, self.smallest_side, edgecolor='black', facecolor='none', lw=2))
 
         for (x, y) in self.pins_relative_xy:
-            ax.add_patch(plt.Rectangle((x - self.pin_dimension / 2, y - self.pin_dimension / 2),
-                                       self.pin_dimension, self.pin_dimension, edgecolor='blue', facecolor='blue', alpha=0.5))
+            if self.pin_shape == "circular":
+                ax.add_patch(plt.Circle((x, y), self.pin_dimension / 2, edgecolor='blue', facecolor='blue', alpha=0.5))
+            else:
+                ax.add_patch(plt.Rectangle((x - self.pin_dimension / 2, y - self.pin_dimension / 2),
+                                           self.pin_dimension, self.pin_dimension, edgecolor='blue', facecolor='blue',
+                                           alpha=0.5))
 
         ax.set_xlim([0, self.largest_side])
         ax.set_ylim([0, self.smallest_side])
         ax.set_aspect('equal', 'box')
-        plt.xlabel('X (mm)')
-        plt.ylabel('Y (mm)')
-        plt.title('Pin Layout')
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.title('Pin layout')
         plt.grid(False)
         plt.show()
 
@@ -120,12 +126,20 @@ class PinDefinition:
         if not self.pin_shape == "circular" and not self.pin_shape == "square":
             raise ValueError(f"Unknown pin shape: {self.pin_shape}")
 
-        print("Pin definition: completed successfully.")  # Add this line here
+        # print(self.pins_relative_xy)
 
-        return {
-            "pins_relative_xy": self.pins_relative_xy,
-            "pin_height_mm": self.calculate_pin_height(),
-            "pin_dimension": self.pin_dimension,
-            "layer_height": self.layer_height,
-            "pin_shape": self.pin_shape  # Return the pin shape for further use
-        }
+        # Check if the pins fit within the cross-section
+        if self.fit_in_cross_section():
+            print("Pin definition: completed successfully.")  # Add this line here
+
+            return {
+                "largest_side": self.largest_side,
+                "smallest_side": self.smallest_side,
+                "pins_relative_xy": self.pins_relative_xy,
+                "pin_height_mm": self.calculate_pin_height(),
+                "pin_dimension": self.pin_dimension,
+                "layer_height": self.layer_height,
+                "pin_shape": self.pin_shape  # Return the pin shape for further use
+            }
+        else:
+            raise ValueError("Problem: pins do not fit within the cross-section.")

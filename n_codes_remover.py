@@ -7,7 +7,7 @@ def remove_line_numbers_and_replace_text(input_file, output_file):
     for i, line in enumerate(lines):
         # Replace "Nematx" with "Super" in the first line
         if i == 0:
-            line = line.replace("Nematx", "Super")
+            line = line.replace("Nemat", "Super")
 
         # Split by space and check if the first part is a line number
         parts = line.strip().split(' ', 1)
@@ -23,8 +23,9 @@ def remove_line_numbers_and_replace_text(input_file, output_file):
         file.writelines(cleaned_lines)
         print("Completed cleaning and updating the G-code file")
 
+
 # Example usage
 gcode_filename = 'thumbnail_test'
-input_gcode_path = 'D:/TUDelft/Thesis/mechanical parts development/nematx_slicer_projects/' + gcode_filename + '.gcode'
-output_gcode_path = 'D:/TUDelft/Thesis/mechanical parts development/nematx_slicer_projects/' + gcode_filename + '_cleaned.gcode'
+input_gcode_path = 'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/nematx_slicer_projects/hole_template_tuning/' + gcode_filename + '.gcode'
+output_gcode_path = 'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/nematx_slicer_projects/hole_template_tuning/' + gcode_filename + '_cleaned.gcode'
 remove_line_numbers_and_replace_text(input_gcode_path, output_gcode_path)
