@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+import os
 
 
 def parse_gcode_lines(gcode_lines, layer_height):
@@ -116,11 +117,11 @@ class GCodeModifier:
                 header_pin_inserted = True  # Ensure we only insert the header once
 
             # ACTUAL PINNING GCODE
-            if "move to next layer" in line.get('comment', ''):
-                if (line['layer'] - 1) in pin_gcode_dict and line['layer'] >= start_layer:
+            if line.get('comment', '') == ";LAYER_CHANGE":
+                if (line['layer']) in pin_gcode_dict and line['layer'] >= start_layer:
                     modified_gcode.append({'comment': ""})  # Add a blank line
                     modified_gcode.append({'comment': ""})  # Add a blank line
-                    for pin_line in pin_gcode_dict[(line['layer'] - 1)]:
+                    for pin_line in pin_gcode_dict[(line['layer'])]:
                         modified_gcode.append(pin_line)  # Directly append the pin_line (which is already a dictionary)
             elif "end_gcode" in line.get('comment', '') and not last_layer_pinned:
                 modified_gcode.append({'comment': ""})  # Add a blank line
@@ -196,6 +197,8 @@ class GCodeModifier:
         if constants["wipe_enabled"]:
             filename_suffix += "_wp"
 
+        filename_suffix += "_" + str(round(constants["flow_ratio"], 3))
+
         output_file_path = output_dir / f"{self.filename.replace('_CL', '')}{filename_suffix}.gcode"
 
         with open(output_file_path, 'w') as file:
@@ -203,3 +206,16 @@ class GCodeModifier:
                 file.write(f"{line}\n")
 
         print(f"Modified gcode saved to {output_file_path}")
+
+        # Rename the gcode_snippets.csv file
+        csv_file_path = (script_dir / "csv_outputs")
+        csv_old_file_path = csv_file_path / "gcode_snippets.csv"
+        new_csv_file_path = csv_file_path / f"{self.filename.replace('_CL', '')}{filename_suffix}.csv"
+
+        if csv_old_file_path.exists():
+            if new_csv_file_path.exists():
+                os.remove(new_csv_file_path)
+            os.rename(csv_old_file_path, new_csv_file_path)
+            print(f"CSV file renamed to {new_csv_file_path}")
+        else:
+            print("CSV file not found. Skipping renaming.")

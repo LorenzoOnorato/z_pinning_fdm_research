@@ -128,6 +128,8 @@ class PinDefinition:
 
         # print(self.pins_relative_xy)
 
+
+
         # Check if the pins fit within the cross-section
         if self.fit_in_cross_section():
             print("Pin definition: completed successfully.")  # Add this line here

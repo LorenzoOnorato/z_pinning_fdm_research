@@ -29,9 +29,7 @@ def process_gcode_files(directory):
 
 if __name__ == "__main__":
     gcode_directories = [
-        'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/3mf_projects_nematx_slicer/pinning_routine_testing/unpinned_gcodes',
-        'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/3mf_projects_nematx_slicer/specimens/gcodes',
-        'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/3mf_projects_nematx_slicer/hole_template_tuning/holes_XY_adjustments/0.2narrow'
+        'D:/TUDelft/Thesis/Engineering/mechanical_parts_development/FDM_Pinning/slicer_post_processor/gcodes'
     ]
 
     for gcode_directory in gcode_directories:

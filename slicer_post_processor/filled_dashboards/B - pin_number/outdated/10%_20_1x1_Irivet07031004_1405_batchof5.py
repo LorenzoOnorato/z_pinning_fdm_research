@@ -22,7 +22,7 @@ nozzle_sinking_1st_layer = False  # mm (for diving sinking nozzle)
 nozzle_sinking_speed = 5.0 * 60  # mm/min (for diving sinking nozzle)
 nozzle_sinking_wait_time = 3  # seconds (for diving sinking nozzle)
 stagger_params = {
-    # "start_layer_offset": 5 * 10,  # Offset to apply between successive pins
+    "start_layer_offset": False,  # Offset to apply between successive pins
     "fixed_start_layers": [14*2],  # Specific starting layers for pins
                   }
 pin_rivet_parameters = {
