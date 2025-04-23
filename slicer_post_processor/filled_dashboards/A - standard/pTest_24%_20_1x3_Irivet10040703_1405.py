@@ -12,10 +12,11 @@ pin_height_layers = 14 * 2
 
 stagger_params = {
     # "start_layer_offset": 5 * 10,  # Offset to apply between successive pins
-    "fixed_start_layers": [14 * 2, 4 * 2 + 1, 9 * 2 + 1],  # Specific starting layers for pins
+    "fixed_start_layers": [14 * 2, 5 * 2, 10 * 2],  # Specific starting layers for pins
     # "fixed_start_layers": [14 * 2, 28, 28],  # Specific starting layers for pins
     # "fixed_start_layers": [14 * 2, 4 * 2, 9 * 2],  # Specific starting layers for pins
 }
+
 pin_rivet_parameters = {
     "cone_radius": 1.0,  # mm
     "cone_height": 0.4,  # mm
@@ -24,27 +25,27 @@ pin_rivet_parameters = {
 }  # pin_rivet_parameters = None
 
 # SPECIMENS SHIFT
-x_shift = 0  # mm 85
-y_shift = 0  # mm 30
+x_shift = 30  # mm 85
+y_shift = 30  # mm 30
 
 ####################################################################################################
 # PINNING ROUTINE PARAMETERS
-flow_ratio = 0.91794  # 0.735
+flow_ratio = 0.91794 * 1.8
 
 # PREVIOUS PINNING PARAMETERS
 pinning_extrusion_speed = 30 * 60  # mm/min
 nozzle_extrude_sunk = True  # (for diving sinking nozzle)
 nozzle_sinking = 0.1  # mm (for diving nozzle)
 nozzle_sinking_wait_time = 0  # seconds (for diving sinking nozzle)
-variable_extrusion_enabled = False  # True or False
-extrusion_skew_percentage = 100  # percentage 100 is 100%, 100 is equivalent to no skew
+variable_extrusion_enabled = True  # True or False
+extrusion_skew_percentage = 200  # percentage 100 is 100%, 100 is equivalent to no skew
 
 # FURTHER PINNING ROUTINE PARAMETERS
 geometrical_extrusion_enabled = True
-cone_blob = False
+cone_blob = True
 blob_feedrate = 100 * 60
 no_pin_retraction = True
-pressure_E_length = 0.5  # mm Set 0 to disable
+pressure_E_length = 0.0  # mm Set 0 to disable
 pressure_E_speed = 100 * 60
 ####################################################################################################
 
@@ -95,7 +96,7 @@ def main():
     parts_on_build_plate = [
         {
             'name': 'part_1',
-            'xy': (85.0 + x_shift, 30.0 + y_shift),
+            'xy': (x_shift, y_shift),
             'rotation': 0.0
         },
         # {

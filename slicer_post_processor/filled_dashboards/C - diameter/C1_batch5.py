@@ -11,8 +11,7 @@ num_pins_smallest_side = 1
 pin_height_layers = 14 * 2
 
 stagger_params = {
-    # "start_layer_offset": 5 * 10,  # Offset to apply between successive pins
-    "fixed_start_layers": [14 * 2, 4 * 2, 9 * 2],  # Specific starting layers for pins
+    "fixed_start_layers": [14 * 2, 5 * 2, 5 * 3],  # Specific starting layers for pins
 }
 
 pin_rivet_parameters = {
@@ -94,29 +93,24 @@ def main():
     parts_on_build_plate = [
         {
             'name': 'part_1',
-            'xy': (32 + x_shift, 27.5 + y_shift),
-            'rotation': 90.0
+            'xy': (85.0 + x_shift, 30.0 + y_shift),
+            'rotation': 0.0
         },
-        {
-            'name': 'part_2',
-            'xy': (37 + x_shift, 27.5 + y_shift),
-            'rotation': 90.0
-        },
-        {
-            'name': 'part_3',
-            'xy': (42 + x_shift, 27.5 + y_shift),
-            'rotation': 90.0
-        },
-        {
-            'name': 'part_4',
-            'xy': (47 + x_shift, 27.5 + y_shift),
-            'rotation': 90.0
-        },
-        {
-            'name': 'part_5',
-            'xy': (52 + x_shift, 27.5 + y_shift),
-            'rotation': 90.0
-        },
+        # {
+        #     'name': 'part_2',
+        #     'xy': (97.15, 42.15),
+        #     'rotation': 90.0
+        # },
+        # {
+        #     'name': 'part_3',
+        #     'xy': (85.0, 54.35),
+        #     'rotation': 0.0
+        # },
+        # {
+        #     'name': 'part_4',
+        #     'xy': (72.85, 42.15),
+        #     'rotation': 90.0
+        # },
         # {
         #     'name': 'part_ll1',
         #     'xy': (135.0, 30.0),

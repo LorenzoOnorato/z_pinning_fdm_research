@@ -153,7 +153,10 @@ class GCodeCommandsComposer:
                 else:
                     pin_height = pin_height_layers
 
-                pin_structure = self._determine_pin_structure(pin_height, layer)
+                if self.geometrical_extrusion_enabled:
+                    pin_structure = self._determine_pin_structure(pin_height, layer)
+                else:
+                    pin_structure = ['cylinder']
 
                 if layer not in staggered_schedule:
                     staggered_schedule[layer] = []
@@ -318,7 +321,7 @@ class GCodeCommandsComposer:
         # Relevant for diving_mode
         gcode_commands_per_layer = 1
         smooth_depressurizing = False
-        one_shot = True
+        one_shot = False
 
         pin_layer_z = self.layer_height * layer
         z = pin_layer_z
@@ -327,6 +330,8 @@ class GCodeCommandsComposer:
 
         if self.pin_rivet_parameters:
             tot_E_pin = self._rivet_like_pin_extrusion_length(current_pin_height)
+        elif not self.geometrical_extrusion_enabled and not self.pin_rivet_parameters:
+            tot_E_pin = self.pin_dimension ** 2 / self.FILAMENT_DIAMETER ** 2 * current_pin_height * self.flow_ratio
         else:
             print(f"Pin geometry not provided. Please check the pin_cross_section_definition.py file.")
 
@@ -393,25 +398,25 @@ class GCodeCommandsComposer:
                                                                     (2 * (step - 1) / (
                                                                         int(current_pin_height / step_height - 1)))))
 
-
-
                 if self.variable_extrusion_enabled and (
                         E_layers - gcode_commands_per_layer) != 0 and not self.geometrical_extrusion_enabled:
                     gcode_unskewed_extrusion_length = tot_E_pin / (E_layers * gcode_commands_per_layer)
                     gcode_command_extrusion_length = gcode_unskewed_extrusion_length * (skew_factor)
 
                 if self.geometrical_extrusion_enabled:
-                    gcode_command_extrusion_length, blob, deslope = self._extrusion_length_per_step_blob_info(step_height,
-                                                                                                     current_z,
-                                                                                                     pin_layer_z,
-                                                                                                     current_pin_height,
-                                                                                                     pin_structure)
+                    gcode_command_extrusion_length, blob, deslope = self._extrusion_length_per_step_blob_info(
+                        step_height,
+                        current_z,
+                        pin_layer_z,
+                        current_pin_height,
+                        pin_structure)
 
                     # The skewing is not applied to the incomplete pins
                     if self.variable_extrusion_enabled and current_pin_height == self.pin_height_mm:
                         gcode_command_extrusion_length = gcode_command_extrusion_length * (skew_factor)
                         if smooth_depressurizing and self.pressure_E_length and deslope[0]:
-                            deslope_layers = (pin_structure[1][1] + pin_structure[2][1] + pin_structure[0][1]) / step_height
+                            deslope_layers = (pin_structure[1][1] + pin_structure[2][1] + pin_structure[0][
+                                1]) / step_height
                             gcode_command_extrusion_length -= self.pressure_E_length / deslope_layers
 
                     E_length_geometrical += gcode_command_extrusion_length
@@ -464,6 +469,7 @@ class GCodeCommandsComposer:
                         f"Total extrusion length {E_length_geometrical:.4f} is not within 5% of expected {tot_E_pin:.4f}")
 
         elif self.diving_mode and one_shot:
+            pre_retraction = 0.0
             if current_pin_height == self.pin_height_mm:
                 z_cone_elevation = self.pin_height_mm / 4 + 0.1
                 z_cylinder_elevation = pin_structure[1][1] / 2
@@ -472,13 +478,16 @@ class GCodeCommandsComposer:
                 z_cylinder_elevation = 0
             z += z_cone_elevation
             # E_A1 = 1.1339
+            # gcode_lines.append(
+            #     f"G1 Z{z:.2f} E{-pre_retraction:.4f} "
+            #     f"F{self.pressure_E_speed:.2f} ; one-shot cone")
             gcode_lines.append(
-                f"G1 Z{z:.2f} E{tot_E_pin + self.pressure_E_length:.4f} "
+                f"G1 Z{z:.2f} E{tot_E_pin + self.pressure_E_length + pre_retraction:.4f} "
                 f"F{self.pressure_E_speed:.2f} ; one-shot cone")
             if z_cylinder_elevation > 0:
                 z += z_cylinder_elevation
                 gcode_lines.append(
-                    f"G1 Z{z:.2f} E-{self.pressure_E_length:.4f} F{self.pinning_extrusion_speed} ; de-pressurizing")
+                    f"G1 Z{z:.2f} E-{self.pressure_E_length:.4f} F{self.pinning_extrusion_speed * 0.8} ; de-pressurizing")
 
 
         else:
@@ -486,12 +495,12 @@ class GCodeCommandsComposer:
 
         if self.pressure_E_length and not smooth_depressurizing and not one_shot:
             # gcode_lines.append(f"; DE-PRESSURIZING")
-              gcode_lines.append(
+            gcode_lines.append(
                 f"G1 Z{printing_z:.2f} E-{self.pressure_E_length:.4f} F{self.pressure_E_speed} ; de-pressurizing")
 
         if self.nozzle_extrude_sunk:
             gcode_lines.append(
-                f"G1 Z{pin_layer_z:.3f} E{0:.4f} F{self.nozzle_sinking_speed * 0.8} ; LIFTING NOZZLE from sunk")
+                f"G1 Z{pin_layer_z:.3f} E{0:.4f} F{self.pinning_extrusion_speed} ; LIFTING NOZZLE from sunk")
 
         if one_shot:
             # gcode_lines.append(
@@ -501,16 +510,23 @@ class GCodeCommandsComposer:
         # gcode_lines.append(f"G4 P{self.nozzle_sinking_wait_time * 1000} ; WAIT")
 
         if self.wipe_enabled:
-            gcode_lines.append(f"; WIPING")
-            gcode_lines.extend(self._generate_wipe_gcode(x, y, (self.pin_dimension / 2 - 0.1), 5,
-                                                         12, self.wipe_speed))
+            gcode_lines.append(f"; SPIRAL WIPING")
+            gcode_lines.extend(self._generate_spiraling_wipe_gcode(x, y, (self.pin_dimension / 2 - 0.1), 3,
+                                                                   12, self.wipe_speed))
 
-            gcode_lines.extend(self._generate_wipe_gcode(x, y, (self.pin_dimension / 2 + 0.5), 7,
-                                                         12, self.wipe_speed, reverse=True,
-                                                         stop_radius=(self.pin_dimension / 2 - 0.1)))
+            gcode_lines.extend(self._generate_spiraling_wipe_gcode(x, y, (self.pin_dimension / 2 + 0.5), 8,
+                                                                   12, self.wipe_speed, reverse=True,
+                                                                   stop_radius=(self.pin_dimension / 2 - 0.1)))
 
-            gcode_lines.extend(self._generate_wipe_gcode(x, y, (self.pin_dimension / 2 - 0.1), 5,
-                                                         12, self.wipe_speed))
+            # gcode_lines.extend(self._generate_spiraling_wipe_gcode(x, y, (self.pin_dimension / 2), 4,
+            #                                              12, self.wipe_speed))
+
+            # ONLY WORKS IF SPECIMENS ORIENTED IN A SPECIFIC WAY
+            gcode_lines.append(f"; SIDE WIPING")
+            gcode_lines.extend(
+                self._generate_serpentine_wipe_gcode(x, y, pin_layer_z, self.pin_dimension + 0.5,
+                                                     self.smallest_side + self.nozzle_outer_diameter * 0.6, 10,
+                                                     self.wipe_speed))
 
         gcode_lines.extend([
             f"; End pin {idx + 1} at layer {layer}",
@@ -529,8 +545,9 @@ class GCodeCommandsComposer:
 
         return gcode_lines
 
-    def _generate_wipe_gcode(self, x, y, spiral_radius, num_turns, points_per_turn, travel_speed, reverse=None,
-                             stop_radius=None):
+    def _generate_spiraling_wipe_gcode(self, x, y, spiral_radius, num_turns, points_per_turn, travel_speed,
+                                       reverse=None,
+                                       stop_radius=None):
 
         wipe_gcode = []
         total_points = num_turns * points_per_turn  # Total number of points to generate
@@ -558,6 +575,105 @@ class GCodeCommandsComposer:
             )
 
         return wipe_gcode
+
+    def _generate_serpentine_wipe_gcode(self, x, y, z, width, height, num_passes, travel_speed):
+        """
+        Generate G-code for a serpentine wipe pattern.
+
+        Args:
+            x (float): X-coordinate of the center of the hole.
+            y (float): Y-coordinate of the center of the hole.
+            width (float): Width of the specimen (longer direction).
+            height (float): Height of the specimen (narrower direction).
+            num_passes (int): Number of passes for the serpentine pattern.
+            travel_speed (float): Travel speed for the wipe.
+
+        Returns:
+            list: List of G-code lines for the serpentine wipe pattern.
+        """
+        wipe_gcode = []
+        step_height = (height / num_passes) / 2  # Height of each serpentine pass
+
+        wipe_gcode.extend(
+            self._generate_half_serpentine(x, y, z, width, step_height, num_passes, travel_speed, direction=1))
+        wipe_gcode.extend(
+            self._generate_half_serpentine(x, y, z, width, step_height, num_passes, travel_speed, direction=-1))
+
+        return wipe_gcode
+
+    def _generate_half_serpentine(self, x, y, z, width, step_height, num_passes, travel_speed, direction):
+        """
+        Generate G-code for half of the serpentine wipe pattern.
+
+        Args:
+            x (float): X-coordinate of the center of the hole.
+            y (float): Y-coordinate of the center of the hole.
+            width (float): Width of the specimen (longer direction).
+            step_height (float): Height of each serpentine pass.
+            num_passes (int): Number of passes for the serpentine pattern.
+            travel_speed (float): Travel speed for the wipe.
+            direction (int): Direction of the serpentine pattern (1 for first half, -1 for second half).
+
+        Returns:
+            list: List of G-code lines for half of the serpentine wipe pattern.
+        """
+        half_wipe_gcode = []
+
+        y_pos = y
+        x_pos = x
+
+        for i in range(num_passes):
+            # if i even
+            if i % 2 == 0:
+                factor = 1 * direction
+            else:
+                factor = -1 * direction
+
+            # rotate 90 degrees when the rotation is 90 degrees
+            if self.parts_dict[0]['rotation'] == 0:
+                x_pos += (width / 2) * factor
+                # print(f"X: {x}")
+                half_wipe_gcode.append(
+                    f"G1 X{x_pos:.3f} Y{y_pos:.3f} F{travel_speed} ; large step")
+                y_pos += (step_height * direction)
+                # print(f"Y: {y_pos}")
+                half_wipe_gcode.append(
+                    f"G1 X{x_pos:.3f} Y{y_pos:.3f} F{travel_speed} ; small step")
+                x_pos -= (width / 2) * factor
+
+            elif self.parts_dict[0]['rotation'] == 90:
+
+                y_pos += (width / 2) * factor
+                half_wipe_gcode.append(
+                    f"G1 X{x_pos:.3f} Y{y_pos:.3f} F{travel_speed} ; large step")
+                x_pos += (step_height * direction)
+                half_wipe_gcode.append(
+                    f"G1 X{x_pos:.3f} Y{y_pos:.3f} F{travel_speed} ; small step")
+                y_pos -= (width / 2) * factor
+            else:
+                print("Serpentine rotation not supported")
+
+        # if z >= self.pin_height_mm:
+        #     if self.parts_dict[0]['rotation'] == 0:
+        #         half_wipe_gcode.append(f"G1 X{x_pos:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 Z{z - 1:.3f}  F{travel_speed} ; ")
+        #
+        #         half_wipe_gcode.append(f"G1 X{x_pos + 1:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 X{x_pos -1:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 X{x_pos:.3f} F{travel_speed} ; ")
+        #
+        #     elif self.parts_dict[0]['rotation'] == 90:
+        #         half_wipe_gcode.append(f"G1 X{x_pos:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 Z{z - 1:.3f}  F{travel_speed} ; ")
+        #
+        #         half_wipe_gcode.append(f"G1 Y{y_pos + 1:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 Y{y_pos -1:.3f} F{travel_speed} ; ")
+        #         half_wipe_gcode.append(f"G1 Y{y_pos:.3f} F{travel_speed} ; ")
+        #
+        #
+        #     half_wipe_gcode.append(f"G1 Z{z:.3f}  F{travel_speed} ; ")
+
+        return half_wipe_gcode
 
     def _rivet_like_pin_extrusion_length(self, pin_height):
         smaller_radius = self.pin_rivet_parameters["cylinder_radius"]

@@ -12,38 +12,38 @@ pin_height_layers = 8 * 2
 
 stagger_params = {
     # "start_layer_offset": 5 * 10,  # Offset to apply between successive pins
-    "fixed_start_layers": [14 * 2, 4 * 2, 9 * 2],  # Specific starting layers for pins
+    "fixed_start_layers": [8 * 2, 3 * 2, 6 * 2],  # Specific starting layers for pins
 }
 
 pin_rivet_parameters = {
-    "cone_radius": 0.8,  # mm
+    "cone_radius": 1.0,  # mm
     "cone_height": 0.4,  # mm
-    "cylinder_radius": 0.5,  # mm
-    "cylinder_height": 0.3  # mm/min
+    "cylinder_radius": 0.7,  # mm
+    "cylinder_height": 0.0  # mm/min
 }  # pin_rivet_parameters = None
 
 # SPECIMENS SHIFT
-x_shift = 85.5  # mm 85.5
-y_shift = 0  # mm 115.5
+x_shift = 148  # mm 85.5
+y_shift = 20  # mm 115.5
 
 ####################################################################################################
 # PINNING ROUTINE PARAMETERS
-flow_ratio = 0.91794  # 0.735
+flow_ratio = 0.91794 * 1.8
 
 # PREVIOUS PINNING PARAMETERS
 pinning_extrusion_speed = 30 * 60  # mm/min
 nozzle_extrude_sunk = True  # (for diving sinking nozzle)
 nozzle_sinking = 0.1  # mm (for diving nozzle)
 nozzle_sinking_wait_time = 0  # seconds (for diving sinking nozzle)
-variable_extrusion_enabled = False  # True or False
-extrusion_skew_percentage = 100  # percentage 100 is 100%, 100 is equivalent to no skew
+variable_extrusion_enabled = True  # True or False
+extrusion_skew_percentage = 200  # percentage 100 is 100%, 100 is equivalent to no skew
 
 # FURTHER PINNING ROUTINE PARAMETERS
 geometrical_extrusion_enabled = True
-cone_blob = False
+cone_blob = True
 blob_feedrate = 100 * 60
 no_pin_retraction = True
-pressure_E_length = 0.5  # mm Set 0 to disable
+pressure_E_length = 0.0  # mm Set 0 to disable
 pressure_E_speed = 100 * 60
 ####################################################################################################
 
@@ -94,89 +94,29 @@ def main():
     parts_on_build_plate = [
         {
             'name': 'part_1',
-            'xy': (32 + x_shift, 27.5 + y_shift),
+            'xy': (7 * -2 + x_shift, y_shift),
             'rotation': 90.0
         },
         {
             'name': 'part_2',
-            'xy': (37 + x_shift, 27.5 + y_shift),
+            'xy': (7 * -1 + x_shift, y_shift),
             'rotation': 90.0
         },
         {
             'name': 'part_3',
-            'xy': (42 + x_shift, 27.5 + y_shift),
+            'xy': (7 * 0 + x_shift, y_shift),
             'rotation': 90.0
         },
         {
             'name': 'part_4',
-            'xy': (47 + x_shift, 27.5 + y_shift),
+            'xy': (7 * 1 + x_shift, y_shift),
             'rotation': 90.0
         },
         {
             'name': 'part_5',
-            'xy': (52 + x_shift, 27.5 + y_shift),
+            'xy': (7 * 2 + x_shift, y_shift),
             'rotation': 90.0
         },
-        # {
-        #     'name': 'part_ll1',
-        #     'xy': (135.0, 30.0),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_ll2',
-        #     'xy': (147.15, 42.15),
-        #     'rotation': 90.0
-        # },
-        # {
-        #     'name': 'part_ll3',
-        #     'xy': (135, 54.35),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_ll4',
-        #     'xy': (122.85, 42.15),
-        #     'rotation': 90.0
-        # },
-        # {
-        #     'name': 'part_l1',
-        #     'xy': (85.0, 30.0),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_l2',
-        #     'xy': (52.05, 37.05),
-        #     'rotation': 90.0
-        # },
-        # {
-        #     'name': 'part_l3',
-        #     'xy': (45.0, 44.1),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_l4',
-        #     'xy': (37.95, 37.05),
-        #     'rotation': 90.0
-        # },
-        # {
-        #     'name': 'part_r1',
-        #     'xy': (105.0, 30.0),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_r2',
-        #     'xy': (112.05, 37.05),
-        #     'rotation': 90.0
-        # },
-        # {
-        #     'name': 'part_r3',
-        #     'xy': (105.0, 44.1),
-        #     'rotation': 0.0
-        # },
-        # {
-        #     'name': 'part_r4',
-        #     'xy': (97.95, 37.05),
-        #     'rotation': 90.0
-        # },
 
     ]
 
