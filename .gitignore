@@ -166,7 +166,7 @@ slicer_post_processor/filled_dashboards/V - virgin
 slicer_post_processor/filled_dashboards/A - standard/routine.py
 slicer_post_processor/filled_dashboards/A - standard/A_SM_complete.py
 slicer_post_processor/filled_dashboards/B - pin_number/outdated
-slicer_post_processor/filled_dashboards/C - diameter
+#slicer_post_processor/filled_dashboards/C - diameter
 slicer_post_processor/filled_dashboards/CL - cylinder
 slicer_post_processor/filled_dashboards/FE - featured
 slicer_post_processor/filled_dashboards/H - hourglass
@@ -175,7 +175,9 @@ slicer_post_processor/filled_dashboards/D - height/outdated
 
 slicer_post_processor/.idea
 slicer_post_processor/csv_outputs
-#slicer_post_processor/csv_postprocess.py
+slicer_post_processor/csv_postprocess.py
+slicer_post_processor/3dplot.py
+slicer_post_processor/plotting_E.py
 
 analysis_exp_data/
 other_files
