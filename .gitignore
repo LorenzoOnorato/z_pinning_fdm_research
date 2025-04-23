@@ -178,8 +178,6 @@ slicer_post_processor/.idea
 slicer_post_processor/csv_outputs
 slicer_post_processor/plotting_E.py
 slicer_post_processor/csv_postprocess.py
-slicer_post_processor/process_gcodes.py
-
 
 analysis_exp_data/
 other_files
